@@ -12,10 +12,10 @@
  * Every function, callback or constant is extensively explained at https://github.com/WoutProvost/FCNPC-MMO/wiki and its various subsections.
 */
 
-#if defined _FCNPC-MMO_included
+#if defined _FCNPC_MMO_included
 	#endinput
 #endif
-#define _FCNPC-MMO_included
+#define _FCNPC_MMO_included
 
 #include <a_samp>
 #include <FCNPC>
