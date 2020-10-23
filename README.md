@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/WoutProvost/FCNPC-MMO.svg)](https://github.com/WoutProvost/FCNPC-MMO/blob/master/LICENSE.md)
 [![Build Status](https://travis-ci.com/WoutProvost/FCNPC-MMO.svg?branch=master)](https://travis-ci.com/WoutProvost/FCNPC-MMO)
 
-FCNPC-MMO is an include for SA-MP servers that extends on the [FCNPC](https://github.com/ziggi/FCNPC) plugin and [FCNPC-AI](https://github.com/WoutProvost/FCNPC-AI) include by adding an MMO-like heads-up display system to the NPCs. See the [changelog](./CHANGELOG.md) for a full list of versions and their updates and the [license](./LICENSE.md) for any legal rules.
+FCNPC-MMO is an include for SA-MP servers that extends on the [FCNPC](https://github.com/ziggi/FCNPC) plugin and [FCNPC-AI](https://github.com/WoutProvost/FCNPC-AI) include by adding an MMO-like heads-up display system to the NPCs. See the [changelog](./CHANGELOG.md) for a full list of versions and their updates.
 
 If you encounter a bug, create an issue in the [issues section](../../issues) with detailed steps on how to reproduce it. For more elaborate discussions or script examples, see the [SA-MP forum thread](https://forum.sa-mp.com/showthread.php?p=3733074).
 
@@ -50,6 +50,3 @@ To test, simply run the package:
 ```bash
 sampctl package run
 ```
-
-## Special thanks
-Many people have (indirectly) contributed to make this system possible. See the [credits](./CREDITS.md) to see who.
