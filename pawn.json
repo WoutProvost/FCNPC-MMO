@@ -1,7 +1,6 @@
 {
 	"user": "WoutProvost",
 	"repo": "FCNPC-MMO",
-	"website": "https://github.com/WoutProvost/FCNPC-MMO",
 	"entry": "test.pwn",
 	"output": "test.amx",
 	"dependencies": [
