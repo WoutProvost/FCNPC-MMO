@@ -1,9 +1,6 @@
 # FCNPC-MMO
 [![sampctl](https://img.shields.io/badge/sampctl-FCNPC--MMO-2f2f2f.svg?style=for-the-badge)](https://github.com/WoutProvost/FCNPC-MMO)
-[![Latest Release](https://img.shields.io/github/release/WoutProvost/FCNPC-MMO.svg?label=latest%20release)](https://github.com/WoutProvost/FCNPC-MMO/releases)
 [![Total Downloads](https://img.shields.io/github/downloads/WoutProvost/FCNPC-MMO/total.svg?label=total%20downloads)](https://www.somsubhra.com/github-release-stats/?username=WoutProvost&repository=FCNPC-MMO)
-[![License](https://img.shields.io/github/license/WoutProvost/FCNPC-MMO.svg)](https://github.com/WoutProvost/FCNPC-MMO/blob/master/LICENSE.md)
-[![Build Status](https://travis-ci.com/WoutProvost/FCNPC-MMO.svg?branch=master)](https://travis-ci.com/WoutProvost/FCNPC-MMO)
 
 FCNPC-MMO is an include for SA-MP servers that extends on the [FCNPC](https://github.com/ziggi/FCNPC) plugin and [FCNPC-AI](https://github.com/WoutProvost/FCNPC-AI) include by adding an MMO-like heads-up display system to the NPCs. See the [changelog](./CHANGELOG.md) for a full list of versions and their updates.
 
