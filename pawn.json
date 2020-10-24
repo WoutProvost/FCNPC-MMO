@@ -6,6 +6,7 @@
 	"dependencies": [
 		"sampctl/samp-stdlib",
 		"ziggi/FCNPC",
+		"WoutProvost/samp-util",
 		"WoutProvost/FCNPC-AI"
 	]
 }
