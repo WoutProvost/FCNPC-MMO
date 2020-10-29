@@ -5,8 +5,8 @@
 
 #include <a_samp>
 #include <FCNPC>
-#include <util>
 #include <FCNPC-AI>
+#include <util>
 
 //========================================FAKE NATIVES========================================
 /*
