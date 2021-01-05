@@ -47,6 +47,11 @@ enum MMO_E_TEXT_DRAW {
 	Text:MMO_TEXT_DRAW_HEALTH_FOREGROUND,
 	Text:MMO_TEXT_DRAW_HEALTH_PERCENTAGE,
 	Text:MMO_TEXT_DRAW_HEALTH_VALUE,
+	Text:MMO_TEXT_DRAW_MANA_BORDER,
+	Text:MMO_TEXT_DRAW_MANA_BACKGROUND,
+	Text:MMO_TEXT_DRAW_MANA_FOREGROUND,
+	Text:MMO_TEXT_DRAW_MANA_PERCENTAGE,
+	Text:MMO_TEXT_DRAW_MANA_VALUE,
 	Text:MMO_TEXT_DRAW_SPELL_BORDER,
 	Text:MMO_TEXT_DRAW_SPELL_BACKGROUND,
 	Text:MMO_TEXT_DRAW_SPELL_FOREGROUND,
@@ -60,13 +65,16 @@ enum MMO_E_HUD (<<=1) {
 	MMO_HUD_HEALTH_BAR,
 	MMO_HUD_HEALTH_PERCENTAGE,
 	MMO_HUD_HEALTH_VALUE,
+	MMO_HUD_MANA_BAR,
+	MMO_HUD_MANA_PERCENTAGE,
+	MMO_HUD_MANA_VALUE,
 	MMO_HUD_SPELL_BAR,
 	MMO_HUD_SPELL_NAME,
 	MMO_HUD_SPELL_TIME
 }
 
 //Spells
-//... rest van spells
+//TODO
 #define MMO_SPELL_BG_COLOR_NORMAL			0x645005ff
 #define MMO_SPELL_FG_COLOR_NORMAL			0xb4820aff
 
@@ -227,6 +235,11 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 	}
 }
 
+static MMO_UpdateNPCManaDisplay(npcid) {
+	//TODO
+	#pragma unused npcid
+}
+
 static bool:MMO_IsPlayerInDisplayRange(playerid, npcid) {
 	new Float:x, Float:y, Float:z;
 	if(!IsPlayerNPC(playerid)) {
@@ -306,6 +319,7 @@ public MMO_DelayNPCHealthDisplay(npcid) {
 
 //Spells
 static MMO_UpdateNPCSpellDisplay(npcid) {
+	//TODO
 	#pragma unused npcid
 }
 
@@ -696,6 +710,7 @@ stock MMO_SetThousandsSeparator(separator) {
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
 		if(FAI_IsValidNPC(npcid)) {
 			MMO_UpdateNPCHealthDisplay(npcid);
+			MMO_UpdateNPCManaDisplay(npcid);
 			MMO_UpdateNPCSpellDisplay(npcid);
 		}
 	}
@@ -711,6 +726,7 @@ stock MMO_SetDecimalSeparator(separator) {
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
 		if(FAI_IsValidNPC(npcid)) {
 			MMO_UpdateNPCHealthDisplay(npcid);
+			MMO_UpdateNPCManaDisplay(npcid);
 			MMO_UpdateNPCSpellDisplay(npcid);
 		}
 	}
@@ -726,6 +742,7 @@ stock MMO_UseHumanReadableFormat(bool:use = true) {
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
 		if(FAI_IsValidNPC(npcid)) {
 			MMO_UpdateNPCHealthDisplay(npcid);
+			MMO_UpdateNPCManaDisplay(npcid);
 			MMO_UpdateNPCSpellDisplay(npcid);
 		}
 	}
@@ -761,9 +778,14 @@ stock bool:MMO_IsHUDElementUsed(npcid, MMO_E_HUD:element) {
 stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 	if(FAI_IsValidNPC(npcid)) {
 		new Float:border = 1.0, Float:vborder = border; //SP proportions: new Float:border = 2.0, Float:vborder = 2.2;
-		new Float:width = 300.0, Float:topLeftX = 320.0 - width/2 - border, Float:topLeftY = 415.0, Float:namevdiff = 14.0, Float:barvdiff = 10.0; //SP proportions: new Float:barvdiff = 10.95;
+		new Float:width = 300.0, Float:topLeftX = 320.0 - width/2 - border, Float:topLeftY = 405.0, Float:namevdiff = 14.0, Float:barvdiff = 10.0; //SP proportions: new Float:barvdiff = 10.95;
 		
 		MMO_NPCs[npcid][MMO_NPC_HUD] = elements;
+
+		// If the mana bar and its components are not used, position the spell bar just below the health bar instead of leaving a gap where the mana bar is normally positioned
+		if(!(MMO_NPCs[npcid][MMO_NPC_HUD] & (MMO_HUD_MANA_BAR | MMO_HUD_MANA_PERCENTAGE | MMO_HUD_MANA_VALUE))) {
+			barvdiff /= 2.0;
+		}
 
 		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_NPC_NAME) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_NPC_NAME] == Text:INVALID_TEXT_DRAW) {
@@ -861,9 +883,86 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE] = Text:INVALID_TEXT_DRAW;
 			}
 		}
+		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_MANA_BAR) {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] == Text:INVALID_TEXT_DRAW) {
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff + barvdiff, "_");
+				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 1);
+				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 0x000000ff);
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 0.0, 0.7); //SP proportions: 0.0, 0.6
+				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], topLeftX + width + border*2, 0.0);
+				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_BORDER);
+			}
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND] == Text:INVALID_TEXT_DRAW) {
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
+				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 1);
+				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 0x0e0c5aff);
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], topLeftX + width + border, 0.0);
+				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_BACKGROUND);
+			}
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] == Text:INVALID_TEXT_DRAW) {
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
+				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 1);
+				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 0x1d19b4ff);
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], topLeftX + width + border, 0.0);
+				MMO_UpdateNPCManaDisplay(npcid); //Due to the nature of resizing the textdraw, it also shows the textdraw
+			}
+		} else {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] != Text:INVALID_TEXT_DRAW) {
+				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER]);
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] = Text:INVALID_TEXT_DRAW;
+			}
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND] != Text:INVALID_TEXT_DRAW) {
+				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND]);
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND] = Text:INVALID_TEXT_DRAW;
+			}
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
+				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND]);
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] = Text:INVALID_TEXT_DRAW;
+			}
+		}
+		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_MANA_PERCENTAGE) {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] == Text:INVALID_TEXT_DRAW) {
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff, "_");
+				TextDrawFont(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 1);
+				TextDrawAlignment(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 1);
+				TextDrawSetProportional(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 1);
+				TextDrawColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 0xffffffff);
+				TextDrawSetShadow(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 0);
+				TextDrawSetOutline(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 1);
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], 0.2, 0.7);
+				MMO_UpdateNPCManaDisplay(npcid);
+				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_PERCENTAGE);
+			}
+		} else {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] != Text:INVALID_TEXT_DRAW) {
+				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE]);
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] = Text:INVALID_TEXT_DRAW;
+			}
+		}
+		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_MANA_VALUE) {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] == Text:INVALID_TEXT_DRAW) {
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] = TextDrawCreate(topLeftX + width + border, topLeftY + namevdiff + barvdiff, "_");
+				TextDrawFont(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 1);
+				TextDrawAlignment(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 3);
+				TextDrawSetProportional(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 1);
+				TextDrawColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 0xffffffff);
+				TextDrawSetShadow(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 0);
+				TextDrawSetOutline(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 1);
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], 0.2, 0.7);
+				MMO_UpdateNPCManaDisplay(npcid);
+				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_VALUE);
+			}
+		} else {
+			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
+				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE]);
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] = Text:INVALID_TEXT_DRAW;
+			}
+		}
 		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_SPELL_BAR) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER] == Text:INVALID_TEXT_DRAW) {
-				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff + barvdiff, "_");
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff + barvdiff*2, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 0x000000ff);
 				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 0.0, 0.7); //SP proportions: 0.0, 0.6
@@ -871,7 +970,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_SPELL_BORDER);
 			}
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] == Text:INVALID_TEXT_DRAW) {
-				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], MMO_SPELL_BG_COLOR_NORMAL);
 				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
@@ -879,7 +978,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_SPELL_BACKGROUND);
 			}
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] == Text:INVALID_TEXT_DRAW) {
-				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], MMO_SPELL_FG_COLOR_NORMAL);
 				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
@@ -902,7 +1001,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 		}
 		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_SPELL_NAME) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME] == Text:INVALID_TEXT_DRAW) {
-				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff, "_");
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2, "_");
 				TextDrawFont(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME], 1);
 				TextDrawAlignment(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME], 1);
 				TextDrawSetProportional(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_NAME], 1);
@@ -921,7 +1020,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 		}
 		if(MMO_NPCs[npcid][MMO_NPC_HUD] & MMO_HUD_SPELL_TIME) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME] == Text:INVALID_TEXT_DRAW) {
-				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME] = TextDrawCreate(topLeftX + width + border, topLeftY + namevdiff + barvdiff, "_");
+				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME] = TextDrawCreate(topLeftX + width + border, topLeftY + namevdiff + barvdiff*2, "_");
 				TextDrawFont(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME], 1);
 				TextDrawAlignment(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME], 3);
 				TextDrawSetProportional(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_TIME], 1);
