@@ -75,11 +75,6 @@ enum MMO_E_HUD (<<=1) {
 	MMO_HUD_SPELL_TIME
 }
 
-//Spells
-//TODO
-#define MMO_SPELL_BG_COLOR_NORMAL			0x645005ff
-#define MMO_SPELL_FG_COLOR_NORMAL			0xb4820aff
-
 //Debug
 #define FAI_DEBUG_DISPLAY_RANGE				FAI_E_DEBUG_RANGE
 
@@ -1024,7 +1019,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] == Text:INVALID_TEXT_DRAW) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 1);
-				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], MMO_SPELL_BG_COLOR_NORMAL);
+				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0x645005ff);
 				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], topLeftX + width + border, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_SPELL_BACKGROUND);
@@ -1032,7 +1027,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] == Text:INVALID_TEXT_DRAW) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 1);
-				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], MMO_SPELL_FG_COLOR_NORMAL);
+				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0xb4820aff);
 				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], topLeftX + width + border, 0.0);
 				MMO_UpdateNPCSpellDisplay(npcid); //Due to the nature of resizing the textdraw, it also shows the textdraw
