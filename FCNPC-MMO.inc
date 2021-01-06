@@ -25,6 +25,8 @@ native MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements);
 native MMO_E_HUD:MMO_GetHUDElements(npcid);
 native MMO_SetName(npcid, const name[]);
 native MMO_GetName(npcid, name[], len);
+native MMO_SetMana(npcid, Float:mana, Float:max = -1.0);
+native Float:MMO_GetMana(npcid, &Float:max = 100.0);
 native MMO_SetDisplayRange(npcid, Float:range, playerid = -1);
 native Float:MMO_GetDisplayRange(npcid, playerid);
 */
@@ -97,8 +99,11 @@ enum MMO_E_NPC {
 	Text:MMO_NPC_TEXT_DRAWS[MMO_E_TEXT_DRAW], //We need to keep the Text: tag here in order to be able to loop over the textdraws enum
 	MMO_E_HUD:MMO_NPC_HUD,
 	MMO_NPC_DELAY_HEALTH_DISPLAY,
+	bool:MMO_NPC_IS_DEAD_BEFORE_RESPAWN,
 	//Can be set by the user
 	MMO_NPC_NAME[MMO_MAX_NPC_NAME + 1],
+	Float:MMO_NPC_MANA, //Can be changed automatically by the script
+	Float:MMO_NPC_MAX_MANA,
 	Float:MMO_NPC_DISPLAY_RANGE[MAX_PLAYERS]
 }
 static MMO_NPCs[MAX_PLAYERS][MMO_E_NPC];
@@ -168,7 +173,10 @@ static MMO_ResetNPC(npcid) {
 	}
 	MMO_NPCs[npcid][MMO_NPC_HUD] = MMO_HUD_NONE;
 	MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] = INVALID_TIMER_ID;
+	MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = false;
 	strclr(MMO_NPCs[npcid][MMO_NPC_NAME]);
+	MMO_NPCs[npcid][MMO_NPC_MANA] = 100.0;
+	MMO_NPCs[npcid][MMO_NPC_MAX_MANA] = 100.0;
 	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) { //Don't use GetPlayerPoolSize, because we need to reset all variables
 		MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid] = 50.0;
 	}
@@ -236,8 +244,44 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 }
 
 static MMO_UpdateNPCManaDisplay(npcid) {
-	//TODO
-	#pragma unused npcid
+	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW || MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] != Text:INVALID_TEXT_DRAW || MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
+		//Update the mana of the NPC
+		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
+			TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], (470.0 - 167.3) * MMO_NPCs[npcid][MMO_NPC_MANA] / MMO_NPCs[npcid][MMO_NPC_MAX_MANA] + 167.3, 0.0);
+		}
+
+		//Update the mana percentage of the NPC
+		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] != Text:INVALID_TEXT_DRAW) {
+			new outputPercentage[4 + 1];
+			format(outputPercentage, sizeof(outputPercentage), "%d%%", floatround(MMO_NPCs[npcid][MMO_NPC_MANA] / MMO_NPCs[npcid][MMO_NPC_MAX_MANA] * 100, floatround_ceil)); //Ceil so 0.3% still displays as 1% instead of 0%
+			TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], outputPercentage);
+		}
+
+		//Update the mana value of the NPC
+		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
+			new manaInteger = floatround(MMO_NPCs[npcid][MMO_NPC_MANA], floatround_ceil); //Ceil so 0.3 still displays as 1 instead of 0
+			if(!MMO_HumanReadableFormat) {
+				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], AddThousandsSeparators(manaInteger, MMO_ThousandsSeparator));
+			} else {
+				new outputValue[14 + 1];
+				if(float(manaInteger) / 1000 / 1000 / 1000 >= 1) {
+					format(outputValue, sizeof(outputValue), "%sB", FormatFloat(float(manaInteger) / 1000 / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
+				} else if(float(manaInteger) / 1000 / 1000 >= 1) {
+					format(outputValue, sizeof(outputValue), "%sM", FormatFloat(float(manaInteger) / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
+				} else if(float(manaInteger) / 1000 >= 1) {
+					format(outputValue, sizeof(outputValue), "%sK", FormatFloat(float(manaInteger) / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
+				} else {
+					strcpy(outputValue, AddThousandsSeparators(manaInteger, MMO_ThousandsSeparator), sizeof(outputValue));
+				}
+				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], outputValue);
+			}
+		}
+	}
+
+	//Reshow the textdraw to make the changes (size) visible
+	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
+		MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_FOREGROUND);
+	}
 }
 
 static bool:MMO_IsPlayerInDisplayRange(playerid, npcid) {
@@ -564,6 +608,10 @@ public FCNPC_OnRespawn(npcid)
 	//NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
+		if(MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN]) {
+			MMO_NPCs[npcid][MMO_NPC_MANA] = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];			
+			MMO_UpdateNPCManaDisplay(npcid);
+		}
 
 		//Debug
 		MMO_ToggleDebugRangeObjects(npcid);
@@ -590,6 +638,9 @@ public FCNPC_OnDeath(npcid, killerid, reason)
 	//NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
+		MMO_NPCs[npcid][MMO_NPC_MANA] = 0.0;
+		MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = true;
+		MMO_UpdateNPCManaDisplay(npcid);
 	}
 
 	new ret = 1;
@@ -1064,6 +1115,34 @@ stock MMO_GetName(npcid, name[], len) {
 		return strlen(name);
 	}
 	return 0;
+}
+
+
+stock MMO_SetMana(npcid, Float:mana, Float:max = -1.0) {
+	if(FAI_IsValidNPC(npcid)) {
+		if(mana < 0.0) {
+			mana = 0.0;
+		}
+		if(max < 0.0) { //Keep previous max mana when using a negative value
+			max = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];
+		}
+		if(mana > max) {
+			max = mana;
+		}
+		MMO_NPCs[npcid][MMO_NPC_MANA] = mana;
+		MMO_NPCs[npcid][MMO_NPC_MAX_MANA] = max;
+		MMO_UpdateNPCManaDisplay(npcid);
+		return 1;
+	}
+	return 0;
+}
+
+stock Float:MMO_GetMana(npcid, &Float:max = 100.0) {
+	if(FAI_IsValidNPC(npcid)) {
+		max = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];
+		return MMO_NPCs[npcid][MMO_NPC_MANA];
+	}
+	return 0.0;
 }
 
 stock MMO_SetDisplayRange(npcid, Float:range, playerid = -1) {
