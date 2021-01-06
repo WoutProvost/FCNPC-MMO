@@ -92,10 +92,10 @@ static MMO_ClosestNPC[MAX_PLAYERS] = {INVALID_PLAYER_ID, ...};
 enum MMO_E_NPC {
 	//Can't be set by the user
 	Text:MMO_NPC_TEXT_DRAWS[MMO_E_TEXT_DRAW], //We need to keep the Text: tag here in order to be able to loop over the textdraws enum
-	MMO_E_HUD:MMO_NPC_HUD,
 	MMO_NPC_DELAY_HEALTH_DISPLAY,
 	bool:MMO_NPC_IS_DEAD_BEFORE_RESPAWN,
 	//Can be set by the user
+	MMO_E_HUD:MMO_NPC_HUD,
 	MMO_NPC_NAME[MMO_MAX_NPC_NAME + 1],
 	Float:MMO_NPC_MANA, //Can be changed automatically by the script
 	Float:MMO_NPC_MAX_MANA,
@@ -166,9 +166,9 @@ static MMO_ResetNPC(npcid) {
 	for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) {
 		MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] = Text:INVALID_TEXT_DRAW;
 	}
-	MMO_NPCs[npcid][MMO_NPC_HUD] = MMO_HUD_NONE;
 	MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] = INVALID_TIMER_ID;
 	MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = false;
+	MMO_NPCs[npcid][MMO_NPC_HUD] = MMO_HUD_NONE;
 	strclr(MMO_NPCs[npcid][MMO_NPC_NAME]);
 	MMO_NPCs[npcid][MMO_NPC_MANA] = 100.0;
 	MMO_NPCs[npcid][MMO_NPC_MAX_MANA] = 100.0;
@@ -815,13 +815,6 @@ stock MMO_GetShowSpellExtraTime() {
 }
 
 //NPCs
-stock bool:MMO_IsHUDElementUsed(npcid, MMO_E_HUD:element) {
-	if(FAI_IsValidNPC(npcid) && MMO_E_HUD:element >= MMO_E_HUD:0 && MMO_E_HUD:element < MMO_E_HUD) {
-		return MMO_NPCs[npcid][MMO_NPC_HUD][MMO_E_HUD:element];
-	}
-	return false;
-}
-
 stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 	if(FAI_IsValidNPC(npcid)) {
 		new Float:border = 1.0, Float:vborder = border; //SP proportions: new Float:border = 2.0, Float:vborder = 2.2;
