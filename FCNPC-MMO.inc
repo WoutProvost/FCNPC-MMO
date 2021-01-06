@@ -609,6 +609,7 @@ public FCNPC_OnRespawn(npcid)
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
 		if(MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN]) {
+			MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = false;
 			MMO_NPCs[npcid][MMO_NPC_MANA] = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];			
 			MMO_UpdateNPCManaDisplay(npcid);
 		}
@@ -638,8 +639,8 @@ public FCNPC_OnDeath(npcid, killerid, reason)
 	//NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
-		MMO_NPCs[npcid][MMO_NPC_MANA] = 0.0;
 		MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = true;
+		MMO_NPCs[npcid][MMO_NPC_MANA] = 0.0;
 		MMO_UpdateNPCManaDisplay(npcid);
 	}
 
