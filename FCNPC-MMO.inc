@@ -8,9 +8,9 @@
 #include <FCNPC-AI>
 #include <util>
 
-//========================================FAKE NATIVES========================================
+// ========================================FAKE NATIVES========================================
 /*
-//General
+// General
 native MMO_SetThousandsSeparator(separator);
 native MMO_GetThousandsSeparator();
 native MMO_SetDecimalSeparator(separator);
@@ -20,7 +20,7 @@ native bool:MMO_IsHumanReadableFormatUsed();
 native MMO_SetShowSpellExtraTime(time);
 native MMO_GetShowSpellExtraTime();
 
-//NPCs
+// NPCs
 native MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements);
 native MMO_E_HUD:MMO_GetHUDElements(npcid);
 native MMO_SetName(npcid, const name[]);
@@ -31,14 +31,14 @@ native MMO_SetDisplayRange(npcid, Float:range, playerid = -1);
 native Float:MMO_GetDisplayRange(npcid, playerid);
 */
 
-//========================================CALLBACKS========================================
-//None
+// ========================================CALLBACKS========================================
+// None
 
-//========================================CONSTANTS========================================
-//General
+// ========================================CONSTANTS========================================
+// General
 #define FCNPC_MMO_VERSION					"1.0.0"
 
-//NPCs
+// NPCs
 #if !defined MMO_MAX_NPC_NAME
 	#define MMO_MAX_NPC_NAME				50
 #endif
@@ -75,53 +75,53 @@ enum MMO_E_HUD (<<=1) {
 	MMO_HUD_SPELL_TIME
 }
 
-//Debug
+// Debug
 #define FAI_DEBUG_DISPLAY_RANGE				FAI_E_DEBUG_RANGE
 
-//========================================VARIABLES========================================
-//General
-static MMO_ThousandsSeparator = ','; //For no separator use '\0'
+// ========================================VARIABLES========================================
+// General
+static MMO_ThousandsSeparator = ','; // For no separator use '\0'
 static MMO_DecimalSeparator = '.';
 static bool:MMO_HumanReadableFormat = false;
 static MMO_ShowSpellExtraTime = 1000;
 
-//Players
+// Players
 static MMO_ClosestNPC[MAX_PLAYERS] = {INVALID_PLAYER_ID, ...};
 
-//NPCs
+// NPCs
 enum MMO_E_NPC {
-	//Can't be set by the user
-	Text:MMO_NPC_TEXT_DRAWS[MMO_E_TEXT_DRAW], //We need to keep the Text: tag here in order to be able to loop over the textdraws enum
+	// Can't be set by the user
+	Text:MMO_NPC_TEXT_DRAWS[MMO_E_TEXT_DRAW], // Use the Text: tag to be able to loop over the enum
 	MMO_NPC_DELAY_HEALTH_DISPLAY,
 	bool:MMO_NPC_IS_DEAD_BEFORE_RESPAWN,
-	//Can be set by the user
+	// Can be set by the user
 	MMO_E_HUD:MMO_NPC_HUD,
 	MMO_NPC_NAME[MMO_MAX_NPC_NAME + 1],
-	Float:MMO_NPC_MANA, //Can be changed automatically by the script
+	Float:MMO_NPC_MANA, // Can be changed automatically by the script
 	Float:MMO_NPC_MAX_MANA,
 	Float:MMO_NPC_DISPLAY_RANGE[MAX_PLAYERS]
 }
 static MMO_NPCs[MAX_PLAYERS][MMO_E_NPC];
 
-//Debug
+// Debug
 static FAI_E_DEBUG_RANGE:MMO_DebugRanges[MAX_PLAYERS] = {FAI_DEBUG_RANGE_NONE, ...};
 static MMO_DebugRangesPlayerID[MAX_PLAYERS] = INVALID_PLAYER_ID;
 
-//========================================INTERNAL FUNCTIONS========================================
-//General
+// ========================================INTERNAL FUNCTIONS========================================
+// General
 static MMO_ScriptInit() {
-	//General
+	// General
 	MMO_ThousandsSeparator = ',';
 	MMO_DecimalSeparator = '.';
 	MMO_HumanReadableFormat = false;
 	MMO_ShowSpellExtraTime = 1000;
 
-	//Players
-	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) { //Don't use GetPlayerPoolSize, because we need to reset all variables
+	// Players
+	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) {
 		MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
 	}
 
-	//NPCs
+	// NPCs
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
 		MMO_ResetNPC(npcid);
 	}
@@ -134,25 +134,27 @@ static MMO_ScriptInit() {
 }
 
 static MMO_ScriptExit() {
-	//General
+	// General
 	MMO_ThousandsSeparator = ',';
 	MMO_DecimalSeparator = '.';
 	MMO_HumanReadableFormat = false;
 	MMO_ShowSpellExtraTime = 1000;
 
-	//Players
-	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) { //Don't use GetPlayerPoolSize, because we need to reset all variables
+	// Players
+	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) {
 		MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
 	}
 
-	//NPCs
+	// NPCs
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) { //In case the user doesn't destroy the NPCs on script exit
+		// In case the user doesn't destroy the NPCs on script exit
+		for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] != Text:INVALID_TEXT_DRAW) {
 				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw]);
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] = Text:INVALID_TEXT_DRAW;
 			}
 		}
+
 		if(MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] != INVALID_TIMER_ID) {
 			KillTimer(MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY]);
 			MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] = INVALID_TIMER_ID;
@@ -160,9 +162,9 @@ static MMO_ScriptExit() {
 	}
 }
 
-//NPCs
+// NPCs
 static MMO_ResetNPC(npcid) {
-	//Don't use FAI_IsValidNPC
+	// Don't use FAI_IsValidNPC
 	for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) {
 		MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] = Text:INVALID_TEXT_DRAW;
 	}
@@ -172,17 +174,17 @@ static MMO_ResetNPC(npcid) {
 	strclr(MMO_NPCs[npcid][MMO_NPC_NAME]);
 	MMO_NPCs[npcid][MMO_NPC_MANA] = 100.0;
 	MMO_NPCs[npcid][MMO_NPC_MAX_MANA] = 100.0;
-	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) { //Don't use GetPlayerPoolSize, because we need to reset all variables
+	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) {
 		MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid] = 50.0;
 	}
 
-	//Debug
+	// Debug
 	MMO_DebugRanges[npcid] = FAI_DEBUG_RANGE_NONE;
 	MMO_DebugRangesPlayerID[npcid] = INVALID_PLAYER_ID;
 }
 
 static MMO_UpdateNPCNameDisplay(npcid) {
-	//Update the name of the NPC
+	// Update the name of the NPC
 	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_NPC_NAME] != Text:INVALID_TEXT_DRAW) {
 		new name[MMO_MAX_NPC_NAME + 1];
 		if(!strempty(MMO_NPCs[npcid][MMO_NPC_NAME])) {
@@ -199,21 +201,23 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 		new Float:maxHealth;
 		new Float:health = FCNPC_GetHealth(npcid, maxHealth);
 
-		//Update the health of the NPC
+		// Update the health of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
 			TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], (470.0 - 167.3) * health / maxHealth + 167.3, 0.0);
 		}
 
-		//Update the health percentage of the NPC
+		// Update the health percentage of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_PERCENTAGE] != Text:INVALID_TEXT_DRAW) {
+			// Ceil so 0.3% still displays as 1% instead of 0%
 			new outputPercentage[4 + 1];
-			format(outputPercentage, sizeof(outputPercentage), "%d%%", floatround(health / maxHealth * 100, floatround_ceil)); //Ceil so 0.3% still displays as 1% instead of 0%
+			format(outputPercentage, sizeof(outputPercentage), "%d%%", floatround(health / maxHealth * 100, floatround_ceil));
 			TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_PERCENTAGE], outputPercentage);
 		}
 
-		//Update the health value of the NPC
+		// Update the health value of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE] != Text:INVALID_TEXT_DRAW) {
-			new healthInteger = floatround(health, floatround_ceil); //Ceil so 0.3 still displays as 1 instead of 0
+			// Ceil so 0.3 still displays as 1 instead of 0
+			new healthInteger = floatround(health, floatround_ceil);
 			if(!MMO_HumanReadableFormat) {
 				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE], AddThousandsSeparators(healthInteger, MMO_ThousandsSeparator));
 			} else {
@@ -232,7 +236,7 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 		}
 	}
 
-	//Reshow the textdraw to make the changes (size) visible
+	// Reshow the textdraw to make the changes (size) visible
 	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
 		MMO_ShowTextDraw(MMO_TEXT_DRAW_HEALTH_FOREGROUND);
 	}
@@ -240,21 +244,23 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 
 static MMO_UpdateNPCManaDisplay(npcid) {
 	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW || MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] != Text:INVALID_TEXT_DRAW || MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
-		//Update the mana of the NPC
+		// Update the mana of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
 			TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], (470.0 - 167.3) * MMO_NPCs[npcid][MMO_NPC_MANA] / MMO_NPCs[npcid][MMO_NPC_MAX_MANA] + 167.3, 0.0);
 		}
 
-		//Update the mana percentage of the NPC
+		// Update the mana percentage of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE] != Text:INVALID_TEXT_DRAW) {
+			// Ceil so 0.3% still displays as 1% instead of 0%
 			new outputPercentage[4 + 1];
-			format(outputPercentage, sizeof(outputPercentage), "%d%%", floatround(MMO_NPCs[npcid][MMO_NPC_MANA] / MMO_NPCs[npcid][MMO_NPC_MAX_MANA] * 100, floatround_ceil)); //Ceil so 0.3% still displays as 1% instead of 0%
+			format(outputPercentage, sizeof(outputPercentage), "%d%%", floatround(MMO_NPCs[npcid][MMO_NPC_MANA] / MMO_NPCs[npcid][MMO_NPC_MAX_MANA] * 100, floatround_ceil));
 			TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_PERCENTAGE], outputPercentage);
 		}
 
-		//Update the mana value of the NPC
+		// Update the mana value of the NPC
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
-			new manaInteger = floatround(MMO_NPCs[npcid][MMO_NPC_MANA], floatround_ceil); //Ceil so 0.3 still displays as 1 instead of 0
+			// Ceil so 0.3 still displays as 1 instead of 0
+			new manaInteger = floatround(MMO_NPCs[npcid][MMO_NPC_MANA], floatround_ceil);
 			if(!MMO_HumanReadableFormat) {
 				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], AddThousandsSeparators(manaInteger, MMO_ThousandsSeparator));
 			} else {
@@ -273,7 +279,7 @@ static MMO_UpdateNPCManaDisplay(npcid) {
 		}
 	}
 
-	//Reshow the textdraw to make the changes (size) visible
+	// Reshow the textdraw to make the changes (size) visible
 	if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] != Text:INVALID_TEXT_DRAW) {
 		MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_FOREGROUND);
 	}
@@ -297,7 +303,8 @@ static MMO_ClosestNPCInDisplayRange(playerid) {
 	new closestNPC = INVALID_PLAYER_ID;
 	new Float:closestNPCRange = 0.0;
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		if(FAI_IsValidNPCForPlayer(npcid, playerid)) { //Don't check for death. Otherwise the health textdraw will not be updated when the NPC dies
+		// Don't check for death. Otherwise the health textdraw will not be updated when the NPC dies
+		if(FAI_IsValidNPCForPlayer(npcid, playerid)) {
 			new Float:x, Float:y, Float:z;
 			FCNPC_GetPosition(npcid, x, y, z);
 			new Float:playerRange = GetPlayerDistanceFromPoint(playerid, x, y, z);
@@ -327,9 +334,9 @@ static MMO_ShowAllTextDrawsForPlayer(playerid) {
 }
 
 static MMO_ShowTextDrawForPlayer(playerid, MMO_E_TEXT_DRAW:textdraw) {
-	//We don't need to display things to an NPC
+	// We don't need to display things to an NPC
 	if(IsPlayerConnected(playerid) && !IsPlayerNPC(playerid)) {
-		//Only show the textdraw for a player of the closest NPC with a valid display range
+		// Only show the textdraw for a player of the closest NPC with a valid display range
 		if(FAI_IsValidNPC(MMO_ClosestNPC[playerid])) {
 			TextDrawShowForPlayer(playerid, MMO_NPCs[MMO_ClosestNPC[playerid]][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw]);
 		}
@@ -343,29 +350,29 @@ static MMO_HideAllTextDrawsForPlayer(playerid) {
 				TextDrawHideForPlayer(playerid, MMO_NPCs[MMO_ClosestNPC[playerid]][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw]);
 			}
 		}
-		
-		//Players
+
+		// Players
 		MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
 	}
 }
 
 forward MMO_DelayNPCHealthDisplay(npcid);
-public MMO_DelayNPCHealthDisplay(npcid) {	
+public MMO_DelayNPCHealthDisplay(npcid) {
 	MMO_UpdateNPCHealthDisplay(npcid);
 	KillTimer(MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY]);
 	MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] = INVALID_TIMER_ID;
 }
 
-//Spells
+// Spells
 static MMO_UpdateNPCSpellDisplay(npcid) {
-	//TODO
+	// TODO
 	#pragma unused npcid
 }
 
-//Debug
+// Debug
 static MMO_ToggleDebugRangeObjects(npcid) {
-	new Float:iScale = 1.0, Float:radius = 50.0; //Radius of modelid is 50.0
-	if(MMO_DebugRanges[npcid] & FAI_DEBUG_DISPLAY_RANGE && MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][MMO_DebugRangesPlayerID[npcid]] > 0.0) { //Blue
+	new Float:iScale = 1.0, Float:radius = 50.0; // Radius of modelid is 50.0
+	if(MMO_DebugRanges[npcid] & FAI_DEBUG_DISPLAY_RANGE && MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][MMO_DebugRangesPlayerID[npcid]] > 0.0) { // Blue
 		new Float:scale = iScale / radius * MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][MMO_DebugRangesPlayerID[npcid]];
 		SetPlayerAttachedObject(npcid, 5, 18843, 1, .fRotY = 90.0, .fScaleX = scale, .fScaleY = scale, .fScaleZ = scale, .materialcolor1 = 0xFF0000FF);
 	} else {
@@ -373,7 +380,7 @@ static MMO_ToggleDebugRangeObjects(npcid) {
 	}
 }
 
-//========================================HOOKED CALLBACKS========================================
+// ========================================HOOKED CALLBACKS========================================
 #if defined FILTERSCRIPT
 	public OnFilterScriptInit()
 	{
@@ -402,7 +409,7 @@ static MMO_ToggleDebugRangeObjects(npcid) {
 			ret = MMO_OnFilterScriptExit();
 		#endif
 
-		MMO_ScriptExit(); //Call after
+		MMO_ScriptExit(); // Call after
 		return ret;
 	}
 	#if defined _ALS_OnFilterScriptExit
@@ -442,7 +449,7 @@ static MMO_ToggleDebugRangeObjects(npcid) {
 			ret = MMO_OnGameModeExit();
 		#endif
 
-		MMO_ScriptExit(); //Call after
+		MMO_ScriptExit(); // Call after
 		return ret;
 	}
 	#if defined _ALS_OnGameModeExit
@@ -457,7 +464,7 @@ static MMO_ToggleDebugRangeObjects(npcid) {
 #endif
 
 public OnPlayerConnect(playerid) {
-	//Players
+	// Players
 	MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
 
 	new ret = 1;
@@ -477,7 +484,7 @@ public OnPlayerConnect(playerid) {
 #endif
 
 public OnPlayerDisconnect(playerid, reason) {
-	//Players
+	// Players
 	MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
 
 	new ret = 1;
@@ -498,8 +505,8 @@ public OnPlayerDisconnect(playerid, reason) {
 
 public OnPlayerRequestClass(playerid, classid)
 {
-	//NPCs
-	//ForceClassSelection doesn't call a state change and thus PLAYER_STATE_WASTED isn't set and thus OnPlayerStateChange or OnPlayerDeath aren't called and thus we need to handle the textdraw hiding here
+	// NPCs
+	// ForceClassSelection doesn't call a state change and thus PLAYER_STATE_WASTED isn't set and thus OnPlayerStateChange or OnPlayerDeath aren't called and thus we need to handle the textdraw hiding here
 	MMO_HideAllTextDrawsForPlayer(playerid);
 
 	new ret = 1;
@@ -520,7 +527,7 @@ public OnPlayerRequestClass(playerid, classid)
 
 public OnPlayerDeath(playerid, killerid, reason)
 {
-	//NPCs
+	// NPCs
 	MMO_HideAllTextDrawsForPlayer(playerid);
 
 	new ret = 1;
@@ -541,9 +548,10 @@ public OnPlayerDeath(playerid, killerid, reason)
 
 public OnPlayerUpdate(playerid)
 {
-	//Players //NPCs	
+	// Players // NPCs
 	new closestNPC = MMO_ClosestNPCInDisplayRange(playerid);
-	if(MMO_ClosestNPC[playerid] != closestNPC) { //Only show textdraws from closest NPC and hide textdraws from any other NPCs
+	if(MMO_ClosestNPC[playerid] != closestNPC) {
+		// Only show textdraws from closest NPC and hide textdraws from any other NPCs
 		MMO_HideAllTextDrawsForPlayer(playerid);
 		MMO_ClosestNPC[playerid] = closestNPC;
 		MMO_ShowAllTextDrawsForPlayer(playerid);
@@ -565,9 +573,10 @@ public OnPlayerUpdate(playerid)
 	forward MMO_OnPlayerUpdate(playerid);
 #endif
 
-public FCNPC_OnDestroy(npcid) //This will both handle NPCs being destroyed programmatically and NPCs being disconnected (kicked/banned)
+// This will both handle NPCs being destroyed programmatically and NPCs being disconnected (kicked/banned)
+public FCNPC_OnDestroy(npcid)
 {
-	//NPCs
+	// NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] != Text:INVALID_TEXT_DRAW) {
@@ -600,16 +609,16 @@ public FCNPC_OnDestroy(npcid) //This will both handle NPCs being destroyed progr
 
 public FCNPC_OnRespawn(npcid)
 {
-	//NPCs
+	// NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
 		if(MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN]) {
 			MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = false;
-			MMO_NPCs[npcid][MMO_NPC_MANA] = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];			
+			MMO_NPCs[npcid][MMO_NPC_MANA] = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];
 			MMO_UpdateNPCManaDisplay(npcid);
 		}
 
-		//Debug
+		// Debug
 		MMO_ToggleDebugRangeObjects(npcid);
 	}
 
@@ -631,7 +640,7 @@ public FCNPC_OnRespawn(npcid)
 
 public FCNPC_OnDeath(npcid, killerid, reason)
 {
-	//NPCs
+	// NPCs
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
 		MMO_NPCs[npcid][MMO_NPC_IS_DEAD_BEFORE_RESPAWN] = true;
@@ -659,13 +668,14 @@ public FCNPC_OnTakeDamage(npcid, issuerid, Float:amount, weaponid, bodypart)
 {
 	new ret = 1;
 	#if defined MMO_FCNPC_OnTakeDamage
-		ret = MMO_FCNPC_OnTakeDamage(npcid, issuerid, amount, weaponid, bodypart); //The user can override the decision for the damage to be afflicted to the NPC
+		// The user can override the decision for the damage to be afflicted to the NPC
+		ret = MMO_FCNPC_OnTakeDamage(npcid, issuerid, amount, weaponid, bodypart);
 	#endif
 
-	if(ret == 1) { //Call after
-		//NPCs
+	if(ret == 1) { // Call after
+		// NPCs
 		if(FAI_IsValidNPC(npcid)) {
-			//Use a 0ms timer to allow the rest of the hooking chain to complete first, so the health value is first updated by the FAI hook and only then displayed by the MMO hook
+			// Use a 0ms timer to allow the rest of the hooking chain to complete first, so the health value is first updated by the FAI hook and only then displayed by the MMO hook
 			MMO_NPCs[npcid][MMO_NPC_DELAY_HEALTH_DISPLAY] = SetTimerEx("MMO_DelayNPCHealthDisplay", 0, false, "i", npcid);
 		}
 	}
@@ -681,19 +691,23 @@ public FCNPC_OnTakeDamage(npcid, issuerid, Float:amount, weaponid, bodypart)
 	forward MMO_FCNPC_OnTakeDamage(npcid, issuerid, Float:amount, weaponid, bodypart);
 #endif
 
-//========================================HOOKED FUNCTIONS========================================
-//NPCs
-stock MMO_FCNPC_Create(const name[]) { //Using function hook instead of callback hook, so that this script only handles NPCs created in this FS/GM. The create callback gets called before the FAI function hook is finished, so a function hook is needed again
+// ========================================HOOKED FUNCTIONS========================================
+// NPCs
+// Using function hook instead of callback hook, so that this script only handles NPCs created in this FS/GM
+// The create callback gets called before the FAI function hook is finished, so a function hook is needed again
+stock MMO_FCNPC_Create(const name[]) {
 	new npcid = FCNPC_Create(name);
 	if(npcid != INVALID_PLAYER_ID) {
-		for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) { //In case something went wrong (gmx, ...)
+		// In case something went wrong (gmx, ...)
+		for(new textdraw = 0; MMO_E_TEXT_DRAW:textdraw < MMO_E_TEXT_DRAW; textdraw++) {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] != Text:INVALID_TEXT_DRAW) {
 				TextDrawDestroy(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw]);
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_E_TEXT_DRAW:textdraw] = Text:INVALID_TEXT_DRAW;
 			}
 		}
 
-		strcpy(MMO_NPCs[npcid][MMO_NPC_NAME], name, MMO_MAX_NPC_NAME + 1); //Default to player name
+		// Default to player name
+		strcpy(MMO_NPCs[npcid][MMO_NPC_NAME], name, MMO_MAX_NPC_NAME + 1);
 	}
 	return npcid;
 }
@@ -705,7 +719,8 @@ stock MMO_FCNPC_Create(const name[]) { //Using function hook instead of callback
 #define FCNPC_Create MMO_FCNPC_Create
 
 stock MMO_FCNPC_SetHealth(npcid, Float:health, Float:max = -1.0) {
-	new ret = FCNPC_SetHealth(npcid, health, max); //Update the health first, then update the display
+	// Update the health first, then update the display
+	new ret = FCNPC_SetHealth(npcid, health, max);
 	if(FAI_IsValidNPC(npcid)) {
 		MMO_UpdateNPCHealthDisplay(npcid);
 	}
@@ -718,7 +733,7 @@ stock MMO_FCNPC_SetHealth(npcid, Float:health, Float:max = -1.0) {
 #endif
 #define FCNPC_SetHealth MMO_FCNPC_SetHealth
 
-//Debug
+// Debug
 stock MMO_FAI_ToggleRangeDebugging(npcid, playerid, FAI_E_DEBUG_RANGE:ranges) {
 	new ret = FAI_ToggleRangeDebugging(npcid, playerid, ranges);
 	if(FAI_IsValidNPC(npcid) && playerid >= 0 && playerid < MAX_PLAYERS) {
@@ -737,7 +752,8 @@ stock MMO_FAI_ToggleRangeDebugging(npcid, playerid, FAI_E_DEBUG_RANGE:ranges) {
 
 stock MMO_FAI_ToggleAngleDebugging(npcid, playerid, FAI_E_DEBUG_ANGLE:angles) {
 	if(FAI_IsValidNPC(npcid) && playerid >= 0 && playerid < MAX_PLAYERS) {
-		MMO_DebugRanges[npcid] = FAI_DEBUG_RANGE_NONE; //Not enough attached object slots to show both ranges and angles
+		// Not enough attached object slots to show both ranges and angles
+		MMO_DebugRanges[npcid] = FAI_DEBUG_RANGE_NONE;
 		MMO_ToggleDebugRangeObjects(npcid);
 	}
 
@@ -750,8 +766,8 @@ stock MMO_FAI_ToggleAngleDebugging(npcid, playerid, FAI_E_DEBUG_ANGLE:angles) {
 #endif
 #define FAI_ToggleAngleDebugging MMO_FAI_ToggleAngleDebugging
 
-//========================================FUNCTIONS========================================
-//General
+// ========================================FUNCTIONS========================================
+// General
 stock MMO_SetThousandsSeparator(separator) {
 	MMO_ThousandsSeparator = separator;
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
@@ -814,12 +830,13 @@ stock MMO_GetShowSpellExtraTime() {
 	return MMO_ShowSpellExtraTime;
 }
 
-//NPCs
+// NPCs
 stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 	if(FAI_IsValidNPC(npcid)) {
-		new Float:border = 1.0, Float:vborder = border; //SP proportions: new Float:border = 2.0, Float:vborder = 2.2;
-		new Float:width = 300.0, Float:topLeftX = 320.0 - width/2 - border, Float:topLeftY = 405.0, Float:namevdiff = 14.0, Float:barvdiff = 10.0; //SP proportions: new Float:barvdiff = 10.95;
-		
+		// SP proportions: new Float:border = 2.0, Float:vborder = 2.2, Float:barvdiff = 10.95;
+		new Float:border = 1.0, Float:vborder = border;
+		new Float:width = 300.0, Float:topLeftX = 320.0 - width/2 - border, Float:topLeftY = 405.0, Float:namevdiff = 14.0, Float:barvdiff = 10.0;
+
 		MMO_NPCs[npcid][MMO_NPC_HUD] = elements;
 
 		// If the mana bar and its components are not used, position the spell bar just below the health bar instead of leaving a gap where the mana bar is normally positioned
@@ -851,7 +868,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER], 0x000000ff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER], 0.0, 0.7); //SP proportions: 0.0, 0.6
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER], 0.0, 0.7); // SP proportions: 0.0, 0.6
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER], topLeftX + width + border*2, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_HEALTH_BORDER);
 			}
@@ -859,7 +876,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND], 0x5a0c0eff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BACKGROUND], topLeftX + width + border, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_HEALTH_BACKGROUND);
 			}
@@ -867,9 +884,9 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], 0xb4191dff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_FOREGROUND], topLeftX + width + border, 0.0);
-				MMO_UpdateNPCHealthDisplay(npcid); //Due to the nature of resizing the textdraw, it also shows the textdraw
+				MMO_UpdateNPCHealthDisplay(npcid); // Due to the nature of resizing the textdraw, it also shows the textdraw
 			}
 		} else {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_BORDER] != Text:INVALID_TEXT_DRAW) {
@@ -928,7 +945,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff + barvdiff, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 0x000000ff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 0.0, 0.7); //SP proportions: 0.0, 0.6
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], 0.0, 0.7); // SP proportions: 0.0, 0.6
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER], topLeftX + width + border*2, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_BORDER);
 			}
@@ -936,7 +953,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 0x0e0c5aff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BACKGROUND], topLeftX + width + border, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_MANA_BACKGROUND);
 			}
@@ -944,9 +961,9 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 0x1d19b4ff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_FOREGROUND], topLeftX + width + border, 0.0);
-				MMO_UpdateNPCManaDisplay(npcid); //Due to the nature of resizing the textdraw, it also shows the textdraw
+				MMO_UpdateNPCManaDisplay(npcid); // Due to the nature of resizing the textdraw, it also shows the textdraw
 			}
 		} else {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_BORDER] != Text:INVALID_TEXT_DRAW) {
@@ -1005,7 +1022,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER] = TextDrawCreate(topLeftX, topLeftY + namevdiff + barvdiff*2, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 0x000000ff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 0.0, 0.7); //SP proportions: 0.0, 0.6
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], 0.0, 0.7); // SP proportions: 0.0, 0.6
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER], topLeftX + width + border*2, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_SPELL_BORDER);
 			}
@@ -1013,7 +1030,7 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0x645005ff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BACKGROUND], topLeftX + width + border, 0.0);
 				MMO_ShowTextDraw(MMO_TEXT_DRAW_SPELL_BACKGROUND);
 			}
@@ -1021,9 +1038,9 @@ stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 				MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND] = TextDrawCreate(topLeftX + border, topLeftY + namevdiff + barvdiff*2 + vborder, "_");
 				TextDrawUseBox(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 1);
 				TextDrawBoxColor(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0xb4820aff);
-				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0.0, 0.5); //SP proportions: 0.0, 0.15
+				TextDrawLetterSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], 0.0, 0.5); // SP proportions: 0.0, 0.15
 				TextDrawTextSize(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_FOREGROUND], topLeftX + width + border, 0.0);
-				MMO_UpdateNPCSpellDisplay(npcid); //Due to the nature of resizing the textdraw, it also shows the textdraw
+				MMO_UpdateNPCSpellDisplay(npcid); // Due to the nature of resizing the textdraw, it also shows the textdraw
 			}
 		} else {
 			if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_SPELL_BORDER] != Text:INVALID_TEXT_DRAW) {
@@ -1106,15 +1123,17 @@ stock MMO_GetName(npcid, name[], len) {
 	return 0;
 }
 
-
 stock MMO_SetMana(npcid, Float:mana, Float:max = -1.0) {
 	if(FAI_IsValidNPC(npcid)) {
 		if(mana < 0.0) {
 			mana = 0.0;
 		}
-		if(max < 0.0) { //Keep previous max mana when using a negative value
+
+		// Keep previous max mana when using a negative value
+		if(max < 0.0) {
 			max = MMO_NPCs[npcid][MMO_NPC_MAX_MANA];
 		}
+		
 		if(mana > max) {
 			max = mana;
 		}
@@ -1135,18 +1154,18 @@ stock Float:MMO_GetMana(npcid, &Float:max = 100.0) {
 }
 
 stock MMO_SetDisplayRange(npcid, Float:range, playerid = -1) {
-	if(FAI_IsValidNPC(npcid) && playerid >= -1 && playerid < MAX_PLAYERS) {		
+	if(FAI_IsValidNPC(npcid) && playerid >= -1 && playerid < MAX_PLAYERS) {
 		if(playerid != -1) {
-			MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid] = range; //Can be negative
+			MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid] = range; // Can be negative
 			MMO_ShowAllTextDrawsForPlayer(playerid);
 		} else {
-			for(new playerid1 = 0; playerid1 < MAX_PLAYERS; playerid1++) { //Don't use GetPlayerPoolSize, because we need to set all variables
-				MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid1] = range; //Can be negative
+			for(new playerid1 = 0; playerid1 < MAX_PLAYERS; playerid1++) {
+				MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][playerid1] = range; // Can be negative
 				MMO_ShowAllTextDrawsForPlayer(playerid1);
 			}
 		}
 
-		//Debug
+		// Debug
 		MMO_ToggleDebugRangeObjects(npcid);
 		return 1;
 	}
