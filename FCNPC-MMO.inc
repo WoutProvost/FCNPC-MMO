@@ -374,9 +374,9 @@ static MMO_ToggleDebugRangeObjects(npcid) {
 	new Float:iScale = 1.0, Float:radius = 50.0; // Radius of modelid is 50.0
 	if(MMO_DebugRanges[npcid] & FAI_DEBUG_DISPLAY_RANGE && MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][MMO_DebugRangesPlayerID[npcid]] > 0.0) { // Blue
 		new Float:scale = iScale / radius * MMO_NPCs[npcid][MMO_NPC_DISPLAY_RANGE][MMO_DebugRangesPlayerID[npcid]];
-		SetPlayerAttachedObject(npcid, 5, 18843, 1, .fRotY = 90.0, .fScaleX = scale, .fScaleY = scale, .fScaleZ = scale, .materialcolor1 = 0xFF0000FF);
+		SetPlayerAttachedObject(npcid, 4, 18843, 1, .fRotY = 90.0, .fScaleX = scale, .fScaleY = scale, .fScaleZ = scale, .materialcolor1 = 0xFF0000FF);
 	} else {
-		RemovePlayerAttachedObject(npcid, 5);
+		RemovePlayerAttachedObject(npcid, 4);
 	}
 }
 
