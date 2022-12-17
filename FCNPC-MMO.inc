@@ -752,7 +752,7 @@ stock MMO_FAI_ToggleRangeDebugging(npcid, playerid, FAI_E_DEBUG_RANGE:ranges) {
 
 stock MMO_FAI_ToggleAngleDebugging(npcid, playerid, FAI_E_DEBUG_ANGLE:angles) {
 	if(FAI_IsValidNPC(npcid) && playerid >= 0 && playerid < MAX_PLAYERS) {
-		// Not enough attached object slots to show both ranges and angles
+		// Not enough attached object slots to show both (sound) ranges and angles
 		MMO_DebugRanges[npcid] = FAI_DEBUG_RANGE_NONE;
 		MMO_ToggleDebugRangeObjects(npcid);
 	}
@@ -765,6 +765,22 @@ stock MMO_FAI_ToggleAngleDebugging(npcid, playerid, FAI_E_DEBUG_ANGLE:angles) {
 	#define _ALS_FAI_ToggleAngleDebugging
 #endif
 #define FAI_ToggleAngleDebugging MMO_FAI_ToggleAngleDebugging
+
+stock MMO_FAI_ToggleSndRngDebugging(npcid, playerid, FAI_E_DEBUG_SOUND_RANGE:ranges) {
+	if(FAI_IsValidNPC(npcid) && playerid >= 0 && playerid < MAX_PLAYERS) {
+		// Not enough attached object slots to show both (sound) ranges and angles
+		MMO_DebugRanges[npcid] = FAI_DEBUG_RANGE_NONE;
+		MMO_ToggleDebugRangeObjects(npcid);
+	}
+
+	return FAI_ToggleSoundRangeDebugging(npcid, playerid, ranges);
+}
+#if defined _ALS_FAI_ToggleSndRngDebugging
+	#undef FAI_ToggleSoundRangeDebugging
+#else
+	#define _ALS_FAI_ToggleSndRngDebugging
+#endif
+#define FAI_ToggleSoundRangeDebugging MMO_FAI_ToggleSndRngDebugging
 
 // ========================================FUNCTIONS========================================
 // General
