@@ -10,16 +10,6 @@
 
 // ========================================FAKE NATIVES========================================
 /*
-// General
-native MMO_SetThousandsSeparator(separator);
-native MMO_GetThousandsSeparator();
-native MMO_SetDecimalSeparator(separator);
-native MMO_GetDecimalSeparator();
-native MMO_UseHumanReadableFormat(bool:use = true);
-native bool:MMO_IsHumanReadableFormatUsed();
-native MMO_SetShowSpellExtraTime(time);
-native MMO_GetShowSpellExtraTime();
-
 // NPCs
 native MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements);
 native MMO_E_HUD:MMO_GetHUDElements(npcid);
@@ -79,12 +69,6 @@ enum MMO_E_HUD (<<=1) {
 #define FAI_DEBUG_DISPLAY_RANGE				FAI_E_DEBUG_RANGE
 
 // ========================================VARIABLES========================================
-// General
-static MMO_ThousandsSeparator = ','; // For no separator use '\0'
-static MMO_DecimalSeparator = '.';
-static bool:MMO_HumanReadableFormat = false;
-static MMO_ShowSpellExtraTime = 1000;
-
 // Players
 static MMO_ClosestNPC[MAX_PLAYERS] = {INVALID_PLAYER_ID, ...};
 
@@ -110,12 +94,6 @@ static MMO_DebugRangesPlayerID[MAX_PLAYERS] = INVALID_PLAYER_ID;
 // ========================================INTERNAL FUNCTIONS========================================
 // General
 static MMO_ScriptInit() {
-	// General
-	MMO_ThousandsSeparator = ',';
-	MMO_DecimalSeparator = '.';
-	MMO_HumanReadableFormat = false;
-	MMO_ShowSpellExtraTime = 1000;
-
 	// Players
 	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) {
 		MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
@@ -125,21 +103,9 @@ static MMO_ScriptInit() {
 	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
 		MMO_ResetNPC(npcid);
 	}
-
-	// printf("---------------------");
-	// printf("  FCNPC-MMO loaded   ");
-	// printf("- Version: %s     ", FCNPC_MMO_VERSION);
-	// printf("- Author: Freaksken  ");
-	// printf("---------------------");
 }
 
 static MMO_ScriptExit() {
-	// General
-	MMO_ThousandsSeparator = ',';
-	MMO_DecimalSeparator = '.';
-	MMO_HumanReadableFormat = false;
-	MMO_ShowSpellExtraTime = 1000;
-
 	// Players
 	for(new playerid = 0; playerid < MAX_PLAYERS; playerid++) {
 		MMO_ClosestNPC[playerid] = INVALID_PLAYER_ID;
@@ -218,21 +184,17 @@ static MMO_UpdateNPCHealthDisplay(npcid) {
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE] != Text:INVALID_TEXT_DRAW) {
 			// Ceil so 0.3 still displays as 1 instead of 0
 			new healthInteger = floatround(health, floatround_ceil);
-			if(!MMO_HumanReadableFormat) {
-				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE], AddThousandsSeparators(healthInteger, MMO_ThousandsSeparator));
+			new outputValue[14 + 1];
+			if(float(healthInteger) / 1000 / 1000 / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fB", float(healthInteger) / 1000 / 1000 / 1000);
+			} else if(float(healthInteger) / 1000 / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fM", float(healthInteger) / 1000 / 1000);
+			} else if(float(healthInteger) / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fK", float(healthInteger) / 1000);
 			} else {
-				new outputValue[14 + 1];
-				if(float(healthInteger) / 1000 / 1000 / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sB", FormatFloat(float(healthInteger) / 1000 / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else if(float(healthInteger) / 1000 / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sM", FormatFloat(float(healthInteger) / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else if(float(healthInteger) / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sK", FormatFloat(float(healthInteger) / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else {
-					strcpy(outputValue, AddThousandsSeparators(healthInteger, MMO_ThousandsSeparator), sizeof(outputValue));
-				}
-				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE], outputValue);
+				format(outputValue, sizeof(outputValue), "%d", healthInteger);
 			}
+			TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_HEALTH_VALUE], outputValue);
 		}
 	}
 
@@ -261,21 +223,17 @@ static MMO_UpdateNPCManaDisplay(npcid) {
 		if(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE] != Text:INVALID_TEXT_DRAW) {
 			// Ceil so 0.3 still displays as 1 instead of 0
 			new manaInteger = floatround(MMO_NPCs[npcid][MMO_NPC_MANA], floatround_ceil);
-			if(!MMO_HumanReadableFormat) {
-				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], AddThousandsSeparators(manaInteger, MMO_ThousandsSeparator));
+			new outputValue[14 + 1];
+			if(float(manaInteger) / 1000 / 1000 / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fB", float(manaInteger) / 1000 / 1000 / 1000);
+			} else if(float(manaInteger) / 1000 / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fM", float(manaInteger) / 1000 / 1000);
+			} else if(float(manaInteger) / 1000 >= 1) {
+				format(outputValue, sizeof(outputValue), "%.2fK", float(manaInteger) / 1000);
 			} else {
-				new outputValue[14 + 1];
-				if(float(manaInteger) / 1000 / 1000 / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sB", FormatFloat(float(manaInteger) / 1000 / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else if(float(manaInteger) / 1000 / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sM", FormatFloat(float(manaInteger) / 1000 / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else if(float(manaInteger) / 1000 >= 1) {
-					format(outputValue, sizeof(outputValue), "%sK", FormatFloat(float(manaInteger) / 1000, 2, 2, MMO_DecimalSeparator, MMO_ThousandsSeparator));
-				} else {
-					strcpy(outputValue, AddThousandsSeparators(manaInteger, MMO_ThousandsSeparator), sizeof(outputValue));
-				}
-				TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], outputValue);
+				format(outputValue, sizeof(outputValue), "%d", manaInteger);
 			}
+			TextDrawSetString(MMO_NPCs[npcid][MMO_NPC_TEXT_DRAWS][MMO_TEXT_DRAW_MANA_VALUE], outputValue);
 		}
 	}
 
@@ -783,69 +741,6 @@ stock MMO_FAI_ToggleSndRngDebugging(npcid, playerid, FAI_E_DEBUG_SOUND_RANGE:ran
 #define FAI_ToggleSoundRangeDebugging MMO_FAI_ToggleSndRngDebugging
 
 // ========================================FUNCTIONS========================================
-// General
-stock MMO_SetThousandsSeparator(separator) {
-	MMO_ThousandsSeparator = separator;
-	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		if(FAI_IsValidNPC(npcid)) {
-			MMO_UpdateNPCHealthDisplay(npcid);
-			MMO_UpdateNPCManaDisplay(npcid);
-			MMO_UpdateNPCSpellDisplay(npcid);
-		}
-	}
-	return 1;
-}
-
-stock MMO_GetThousandsSeparator() {
-	return MMO_ThousandsSeparator;
-}
-
-stock MMO_SetDecimalSeparator(separator) {
-	MMO_DecimalSeparator = separator;
-	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		if(FAI_IsValidNPC(npcid)) {
-			MMO_UpdateNPCHealthDisplay(npcid);
-			MMO_UpdateNPCManaDisplay(npcid);
-			MMO_UpdateNPCSpellDisplay(npcid);
-		}
-	}
-	return 1;
-}
-
-stock MMO_GetDecimalSeparator() {
-	return MMO_DecimalSeparator;
-}
-
-stock MMO_UseHumanReadableFormat(bool:use = true) {
-	MMO_HumanReadableFormat = use;
-	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		if(FAI_IsValidNPC(npcid)) {
-			MMO_UpdateNPCHealthDisplay(npcid);
-			MMO_UpdateNPCManaDisplay(npcid);
-			MMO_UpdateNPCSpellDisplay(npcid);
-		}
-	}
-	return 1;
-}
-
-stock bool:MMO_IsHumanReadableFormatUsed() {
-	return MMO_HumanReadableFormat;
-}
-
-stock MMO_SetShowSpellExtraTime(time) {
-	MMO_ShowSpellExtraTime = time;
-	for(new npcid = 0; npcid < MAX_PLAYERS; npcid++) {
-		if(FAI_IsValidNPC(npcid)) {
-			MMO_UpdateNPCSpellDisplay(npcid);
-		}
-	}
-	return 1;
-}
-
-stock MMO_GetShowSpellExtraTime() {
-	return MMO_ShowSpellExtraTime;
-}
-
 // NPCs
 stock MMO_ToggleHUDElements(npcid, MMO_E_HUD:elements) {
 	if(FAI_IsValidNPC(npcid)) {
